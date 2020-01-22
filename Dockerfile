@@ -14,15 +14,19 @@ RUN chmod +x /tmp/*.sh && \
 
 # Install kafka
 # ADD https://archive.apache.org/dist/kafka/2.4.0/kafka_2.12-2.4.0.tgz /opt/
-COPY ./kafka_2.12-2.4.0.tar /opt/
+COPY ./kafka_2.12-2.4.0.tgz /opt/
 RUN cd /opt && \
-    tar -xf kafka_2.12-2.4.0.tar && \
+    tar -xzf kafka_2.12-2.4.0.tgz && \
     mv kafka_2.12-2.4.0 kafka && \
     rm -rf /opt/*.tar && \
     mv /tmp/server.properties /opt/kafka/config/server.properties && \
     mkdir /data && mkdir /data/kafka
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "healthcheck.sh" ]
+EXPOSE 9092
+
+HEALTHCHECK --interval=45s --timeout=35s --start-period=15s --retries=1 CMD [ "healthcheck.sh" ]
+
+WORKDIR /opt/kafka
 
 CMD [ "start.sh" ]
 
