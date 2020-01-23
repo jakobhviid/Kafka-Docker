@@ -2,7 +2,7 @@ version: "3"
 
 services:
   kafka:
-    image: omvk97/kafkatest:0.3.8
+    image: omvk97/kafkatest:0.4.2
     ports:
       - "9092:9092"
       - "9093:9093"
@@ -15,7 +15,5 @@ services:
       KAFKA_DEFAULT_REPLICATION_FACTOR: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
       KAFKA_MIN_INSYNC_REPLICAS: 2
-      KAFKA_BROKER_ID: 3
-    volumes:
-      - "/data/kafka:/data/kafka"
+      KAFKA_BROKER_ID: 4
     restart: always

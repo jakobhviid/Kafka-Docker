@@ -19,12 +19,13 @@ RUN cd /opt && \
     tar -xzf kafka_2.12-2.4.0.tgz && \
     mv kafka_2.12-2.4.0 kafka && \
     rm -rf /opt/*.tar && \
-    mv /tmp/server.properties /opt/kafka/config/server.properties && \
-    mkdir /data && mkdir /data/kafka
+    mv /tmp/server.properties /opt/kafka/config/server.properties
 
 EXPOSE 9092
 
-HEALTHCHECK --interval=45s --timeout=35s --start-period=15s --retries=1 CMD [ "healthcheck.sh" ]
+HEALTHCHECK --interval=45s --timeout=35s --start-period=15s --retries=2 CMD [ "healthcheck.sh" ]
+
+VOLUME [ "/data/kafka" ]
 
 WORKDIR /opt/kafka
 
