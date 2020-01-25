@@ -68,8 +68,17 @@ fi
 
 echo "INFO Configuring Kafka Server"
 
+# File descript limits
 echo "* hard nofile 100000
 * soft nofile 100000" | tee --append /etc/security/limits.conf
+
+# TODO - Look into XFS filesystem, as kafka prefers this
+
+# Kafka heap size atleast 4 gigabytes of ram
+export KAFKA_HEAP_OPTS="-Xmx4g"
+
+# avoid swapping
+sysctl vm.swappiness=0
 
 echo "INFO Starting Kafka Server"
 

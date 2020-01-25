@@ -23,13 +23,13 @@ then
     # Topic deleted for the future
     /opt/kafka/bin/kafka-topics.sh --delete --topic $topicName --bootstrap-server localhost:9092
 
-    # Check if topic has been deleted
-    topic=`/opt/kafka/bin/kafka-topics.sh --list --topic $topicName --bootstrap-server localhost:9092 | grep "$topicName"`
-    if ! [[ -z "$topic" ]] # If topic is not empty
-    then
-        echo " ERROR Found topic in list after deletion "
-        exit 1
-    fi
+    # # Check if topic has been deleted
+    # topic=`/opt/kafka/bin/kafka-topics.sh --list --topic $topicName --bootstrap-server localhost:9092 | grep "$topicName"`
+    # if ! [[ -z "$topic" ]] # If topic is not empty
+    # then
+    #     echo " ERROR Found topic in list after deletion "
+    #     exit 1
+    # fi
 
     echo " OK "
     exit 0
