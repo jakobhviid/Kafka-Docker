@@ -2,9 +2,9 @@ FROM ubuntu:18.04
 
 ENV KAFKA_HOME=/opt/kafka
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends openjdk-8-jre-headless && \
-    apt-get install -y jq
+RUN apt update && \
+    apt install -y --no-install-recommends openjdk-8-jre-headless && \
+    apt install -y jq
 
 # Copy necessary scripts + configuration
 COPY scripts server.properties /tmp/
