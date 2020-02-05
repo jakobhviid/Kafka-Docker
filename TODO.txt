@@ -1,1 +1,0 @@
-Gør MAX_HEAP_SIZE til en environment variabel
