@@ -17,9 +17,9 @@ RUN chmod +x /tmp/*.sh && \
 COPY ./kafka_2.12-2.4.0.tgz /opt/
 RUN cd /opt && \
     tar -xzf kafka_2.12-2.4.0.tgz && \
-    mv kafka_2.12-2.4.0 kafka && \
+    mv kafka_2.12-2.4.0 ${KAFKA_HOME} && \
     rm -rf /opt/*.tar && \
-    mv /tmp/server.properties /opt/kafka/config/server.properties
+    mv /tmp/server.properties ${KAFKA_HOME}/config/server.properties
 
 EXPOSE 9092
 
@@ -27,7 +27,7 @@ HEALTHCHECK --interval=45s --timeout=35s --start-period=15s --retries=2 CMD [ "h
 
 VOLUME [ "/data/kafka" ]
 
-WORKDIR /opt/kafka
+WORKDIR ${KAFKA_HOME}
 
 CMD [ "start.sh" ]
 

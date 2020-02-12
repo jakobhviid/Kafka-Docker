@@ -7,6 +7,28 @@ It is necessary to open ports on the host machine. 9092 (client connections) and
 
 Quite a few environment variabels are required in order for Kafka to work properly in a cluster and they are important to get right. Some environemnt variables can also be set but is not required as defaults work out of the box.
 
+```
+version: "3"
+
+services:
+  kafka:
+    image: cfei/kafka
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "134.209.90.217:2181,178.62.223.195:2181,188.166.44.123:2181"
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://134.209.90.217:9093,EXTERNAL://134.209.90.217:9092
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_RETENTION_HOURS: 336 # 14 days
+    restart: always
+
+```
+
 # Configuration
 **Configurations for a clustered setup**
 
