@@ -1,18 +1,49 @@
-version: "3"
+version: "3.7"
 
 services:
+  zoo:
+    image: cfei/zookeeper
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
+    environment:
+      ZOO_ID: 1
+      ZOO_PORT: 2181
+    restart: always
+
   kafka:
-    image: cfei/kafka
+    build: ./
     container_name: kafka
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - 9092:9092
+      - 9093:9093
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: "134.209.90.217:2181,178.62.223.195:2181,188.166.44.123:2181"
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://134.209.90.217:9093,EXTERNAL://134.209.90.217:9092
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-      KAFKA_RETENTION_HOURS: 336 # 14 days
+      KAFKA_ZOOKEEPER_CONNECT: "zoo:2181"
+      KAFKA_LISTENERS: INTERNAL_SASL://0.0.0.0:9092,EXTERNAL_SASL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL://kafka:9092,EXTERNAL_SASL://kafka:9093
+      KAFKA_ENABLE_KERBEROS: 'true'
+      KERBEROS_SERVER_IP: 157.245.70.70
+      KERBEROS_KEYTAB_LOCATION: /keytabs/kafka.service.keytab
+      KERBEROS_PRINCIPAL: "kafka/167.71.67.196@KAFKA.SECURE"
+
+    depends_on:
+      - zoo
     restart: always
+  # kafka:
+  #   image: cfei/kafka
+  #   container_name: kafka
+  #   ports:
+  #     - "9092:9092"
+  #     - "9093:9093"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: "134.209.90.217:2181,178.62.223.195:2181,188.166.44.123:2181"
+  #     KAFKA_ADVERTISED_LISTENERS: INTERNAL://134.209.90.217:9093,EXTERNAL://134.209.90.217:9092
+  #     KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+  #     KAFKA_MIN_INSYNC_REPLICAS: 2
+  #     KAFKA_RETENTION_HOURS: 336 # 14 days
+  #   restart: always
