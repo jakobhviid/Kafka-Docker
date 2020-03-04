@@ -21,7 +21,7 @@ RUN cd /opt && \
     rm -rf /opt/*.tar && \
     mv /tmp/server.properties ${KAFKA_HOME}/config/server.properties
 
-EXPOSE 9092
+EXPOSE 9092 9093
 
 HEALTHCHECK --interval=45s --timeout=35s --start-period=15s --retries=2 CMD [ "healthcheck.sh" ]
 
