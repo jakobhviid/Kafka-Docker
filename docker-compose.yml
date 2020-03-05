@@ -16,6 +16,7 @@ services:
   kafka:
     build: ./
     container_name: kafka
+    restart: always
     ports:
       - 9092:9092
       - 9093:9093
@@ -46,4 +47,10 @@ services:
   #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
   #     KAFKA_MIN_INSYNC_REPLICAS: 2
   #     KAFKA_RETENTION_HOURS: 336 # 14 days
-  #   restart: always
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3.cfei.dk:9093,EXTERNAL://kafka3.cfei.dk:9092
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_RETENTION_HOURS: 336
+      KAFKA_HEAP_OPTS: "-Xmx8G -Xms4G" # max heap size of 8 gigabytes - initial heap size of 4 gigabytes
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL

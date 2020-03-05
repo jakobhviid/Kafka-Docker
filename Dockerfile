@@ -22,6 +22,7 @@ RUN cd /opt && \
     mv /tmp/server.properties ${KAFKA_HOME}/config/server.properties && \
     mkdir /keytabs
 
+EXPOSE 9092 9093
 # # SSL. ssl is where everything related to kafka broker is, certificate_authorizer is everything related to mimicking a certificate authorizer which will be shared among all brokers and clients
 # RUN mkdir /ssl && mkdir /certificate_authorizer
 
