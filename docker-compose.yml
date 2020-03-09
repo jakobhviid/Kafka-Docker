@@ -1,9 +1,10 @@
-version: "3.7"
+version: "3"
 
 services:
   zoo:
     image: cfei/zookeeper
     container_name: zookeeper
+    restart: always
     ports:
       - 2181:2181
       - 2888:2888
@@ -11,7 +12,6 @@ services:
     environment:
       ZOO_ID: 1
       ZOO_PORT: 2181
-    restart: always
 
   kafka:
     build: ./
@@ -22,35 +22,29 @@ services:
       - 9093:9093
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: "zoo:2181"
-      KAFKA_LISTENERS: INTERNAL_SASL://0.0.0.0:9092,EXTERNAL_SASL://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL://kafka:9092,EXTERNAL_SASL://kafka:9093
-      KAFKA_ENABLE_KERBEROS: 'true'
-      KERBEROS_SERVER_IP: 157.245.70.70
-      KERBEROS_KEYTAB_LOCATION: /keytabs/kafka.service.keytab
-      KERBEROS_PRINCIPAL: "kafka/167.71.67.196@KAFKA.SECURE"
-
+      KAFKA_ZOOKEEPER_CONNECT: zoo:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL_SSL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL_SSL://localhost:9093
+      # KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_TLS_SERVER_DNS_HOSTNAME: localhost
+      KAFKA_TLS_CLIENT_AUTH: required
+      KAFKA_TLS_SECURITY_INTER_BROKER_PROTOCOL: INTERNAL_SSL
     depends_on:
       - zoo
+      - ca
+
+  ca:
+    image: omvk97/ca
+    container_name: ca
     restart: always
-  # kafka:
-  #   image: cfei/kafka
-  #   container_name: kafka
-  #   ports:
-  #     - "9092:9092"
-  #     - "9093:9093"
-  #   environment:
-  #     KAFKA_BROKER_ID: 1
-  #     KAFKA_ZOOKEEPER_CONNECT: "134.209.90.217:2181,178.62.223.195:2181,188.166.44.123:2181"
-  #     KAFKA_ADVERTISED_LISTENERS: INTERNAL://134.209.90.217:9093,EXTERNAL://134.209.90.217:9092
-  #     KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
-  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-  #     KAFKA_MIN_INSYNC_REPLICAS: 2
-  #     KAFKA_RETENTION_HOURS: 336 # 14 days
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3.cfei.dk:9093,EXTERNAL://kafka3.cfei.dk:9092
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-      KAFKA_RETENTION_HOURS: 336
-      KAFKA_HEAP_OPTS: "-Xmx8G -Xms4G" # max heap size of 8 gigabytes - initial heap size of 4 gigabytes
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+    ports:
+      - 5000:5000
+    volumes:
+      - ./cert-auth:/ssl/
+#keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365
+# -dname "CN=test.jobservant.software" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
+# -ext SAN=DNS:ubunt1
+
+#keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365
+# -dname "CN=<<public_DNS>>" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
+# -ext SAN=DNS:<<hostname>>
