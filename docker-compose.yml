@@ -16,19 +16,17 @@ services:
   kafka:
     build: ./
     container_name: kafka
-    restart: always
     ports:
       - 9092:9092
       - 9093:9093
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zoo:2181
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL_SSL://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9092,EXTERNAL_SSL://localhost:9093
-      # KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_LISTENERS: SSL://0.0.0.0:9092,EXTERNAL_SSL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9092,EXTERNAL_SSL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL
       KAFKA_TLS_SERVER_DNS_HOSTNAME: localhost
       KAFKA_TLS_CLIENT_AUTH: required
-      KAFKA_TLS_SECURITY_INTER_BROKER_PROTOCOL: INTERNAL_SSL
     depends_on:
       - zoo
       - ca
@@ -41,10 +39,3 @@ services:
       - 5000:5000
     volumes:
       - ./cert-auth:/ssl/
-#keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365
-# -dname "CN=test.jobservant.software" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
-# -ext SAN=DNS:ubunt1
-
-#keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365
-# -dname "CN=<<public_DNS>>" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
-# -ext SAN=DNS:<<hostname>>
