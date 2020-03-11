@@ -1,22 +1,41 @@
 version: "3"
 
 services:
-  kafka:
-    image: cfei/kafka
-    container_name: kafka
+  zoo:
+    image: cfei/zookeeper
+    container_name: zookeeper
     restart: always
     ports:
-      - "9092:9092"
-      - "9093:9093"
-    volumes:
-      - ./data:/data/kafka
+      - 2181:2181
+      - 2888:2888
+      - 3888:3888
     environment:
-      KAFKA_BROKER_ID: 3
-      KAFKA_ZOOKEEPER_CONNECT: kafka2.cfei.dk:2181,kafka3.cfei.dk:2181
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3.cfei.dk:9093,EXTERNAL://kafka3.cfei.dk:9092
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9093,EXTERNAL://0.0.0.0:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
-      KAFKA_MIN_INSYNC_REPLICAS: 2
-      KAFKA_RETENTION_HOURS: 336
-      KAFKA_HEAP_OPTS: "-Xmx8G -Xms4G" # max heap size of 8 gigabytes - initial heap size of 4 gigabytes
+      ZOO_ID: 1
+      ZOO_PORT: 2181
+
+  kafka:
+    build: ./
+    container_name: kafka
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zoo:2181
+      KAFKA_LISTENERS: SSL://0.0.0.0:9092,EXTERNAL_SSL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9092,EXTERNAL_SSL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: SSL
+      KAFKA_TLS_SERVER_DNS_HOSTNAME: localhost
+      KAFKA_TLS_CLIENT_AUTH: required
+    depends_on:
+      - zoo
+      - ca
+
+  ca:
+    image: omvk97/ca
+    container_name: ca
+    restart: always
+    ports:
+      - 5000:5000
+    volumes:
+      - ./cert-auth:/ssl/
