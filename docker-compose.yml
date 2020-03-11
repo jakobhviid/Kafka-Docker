@@ -27,6 +27,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: SSL
       KAFKA_TLS_SERVER_DNS_HOSTNAME: localhost
       KAFKA_TLS_CLIENT_AUTH: required
+      KAFKA_CERTIFICATE_AUTHORITY_URL: ca:5000
     depends_on:
       - zoo
       - ca

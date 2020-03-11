@@ -1,6 +1,8 @@
 FROM ubuntu:18.04
 
 ENV KAFKA_HOME=/opt/kafka
+ENV KAFKA_DATA_HOME=/data/kafka
+ENV KAFKA_SSL_HOME=/ssl
 
 RUN apt update && \
     apt install -y --no-install-recommends openjdk-11-jre-headless && \
@@ -26,7 +28,7 @@ EXPOSE 9092 9093
 
 HEALTHCHECK --interval=75s --timeout=35s --start-period=15s --retries=2 CMD [ "healthcheck.sh" ]
 
-VOLUME [ "/data/kafka", "/ssl/" ]
+VOLUME [ ${KAFKA_DATA_HOME}, ${KAFKA_SSL_HOME} ]
 
 WORKDIR ${KAFKA_HOME}
 

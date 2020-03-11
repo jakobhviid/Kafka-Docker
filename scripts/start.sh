@@ -1,6 +1,6 @@
 #!/bin/bash
 
-configure_kafka.sh
+configure-kafka.sh
 
 if [ $? != 0 ]; then
     exit 1
@@ -15,5 +15,4 @@ sysctl vm.swappiness=1
 
 echo "INFO - Starting Kafka Server"
 
-cat $KAFKA_HOME/config/server.properties
 $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties

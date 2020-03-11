@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Load helper functions for configuring kafka server.properties
-. properties_helper.sh
+. properties-helper.sh
 
 if [ -z "$KAFKA_ZOOKEEPER_CONNECT" ]; then
     echo -e "\e[1;32mERROR - Missing essential zookeeper connection URI \e[0m"
@@ -78,5 +78,5 @@ if ! [ -z "$KAFKA_TLS_CLIENT_AUTH" ]; then
 fi
 
 if ! [ -z "$KAFKA_TLS_SERVER_DNS_HOSTNAME" ]; then
-    ssl_setup.sh
+    ssl-setup.sh
 fi

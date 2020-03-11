@@ -3,7 +3,7 @@ if [[ -f "/ssl/kafka.server.keystore.jks" && -f "/ssl/kafka.server.truststore.jk
     echo "INFO - Keystore and truststore already exists. Using those"
 else
     # Load helper functions for configuring kafka server.properties
-    . properties_helper.sh
+    . properties-helper.sh
 
     echo "INFO - Configuring SSL"
     export SRVPASS=serversecret
@@ -15,12 +15,12 @@ else
     keytool -keystore /ssl/kafka.server.keystore.jks -alias localhost -certreq -file /ssl/cert-file -storepass $SRVPASS -keypass $SRVPASS
 
     # Signing the certificate with certificate authorizer
-    curl --form certificate-request=@/ssl/cert-file http://ca:5000/sign-certificate -o /ssl/cert-signed
+    curl --form certificate-request=@/ssl/cert-file http://"$KAFKA_CERTIFICATE_AUTHORITY_URL"/sign-certificate -o /ssl/cert-signed
 
     rm /ssl/cert-file
 
     # Getting the public certificate from certiticate authorizer
-    curl http://ca:5000/get-certificate -o /ssl/ca-cert
+    curl http://"$KAFKA_CERTIFICATE_AUTHORITY_URL"/get-certificate -o /ssl/ca-cert
 
     # Creating a truststore for the kafka broker to trust all clients which the certificate authorithy has signed
     keytool -keystore /ssl/kafka.server.truststore.jks -alias CARoot -import -file /ssl/ca-cert -storepass $SRVPASS -keypass $SRVPASS -noprompt
