@@ -2,7 +2,7 @@ version: "3"
 
 services:
   zoo:
-    image: cfei/zookeeper
+    image: zookeeper
     container_name: zookeeper
     restart: always
     ports:
@@ -11,23 +11,31 @@ services:
       - 3888:3888
     environment:
       ZOO_ID: 1
-      ZOO_PORT: 2181
+      # ZOO_PORT: 2181
 
   kafka:
-    build: ./
-    container_name: kafka
+    image: omvk97/kafka
+    container_name: kafka2
     ports:
-      - 9092:9092
-      - 9093:9093
+      - 9094:9094
+      - 9095:9095
     environment:
-      KAFKA_BROKER_ID: 1
+      KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zoo:2181
-      KAFKA_LISTENERS: SSL://0.0.0.0:9092,EXTERNAL_SSL://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: SSL://localhost:9092,EXTERNAL_SSL://localhost:9093
-      KAFKA_INTER_BROKER_LISTENER_NAME: SSL
-      KAFKA_TLS_SERVER_DNS_HOSTNAME: localhost
-      KAFKA_TLS_CLIENT_AUTH: required
+      # Kafka will listen with plaintext, because they are on a private network and therefore the delay added by authentication can be removed
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9094,SASL_SSL://0.0.0.0:9095
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9094,SASL_SSL://localhost:9095
+      # Kafka will enable SSL by reaching out to KAFKA_CERTIFICATE_AUTHORITY_URL and getting a signed certificate for encrypted traffic between the broker and clients
+      KAFKA_SSL_SERVER_HOSTNAME: localhost
       KAFKA_CERTIFICATE_AUTHORITY_URL: ca:5000
+      # Kafka will enable Kerberos as authentication scheme in order to identify clients in order to create acls
+      KAFKA_AUTHENTICATION: KERBEROS
+      # In order to enable Kerberos a principal (the user kafka should use) is needed for the kafka
+      KERBEROS_PRINCIPAL: kafka/localhost@KAFKA.SECURE
+      KAFKA_HEAP_OPTS: "-Xmx4G"
+    volumes:
+      # In order to enable Kerberos kafka requires a keytab it can use as lookup to see clients identity
+      - ./kafka.service.keytab:/sasl/kafka.service.keytab
     depends_on:
       - zoo
       - ca
@@ -37,6 +45,14 @@ services:
     container_name: ca
     restart: always
     ports:
-      - 5000:5000
+      - 5001:5000
     volumes:
       - ./cert-auth:/ssl/
+  # zoonavigator:
+  #   image: elkozmon/zoonavigator
+  #   container_name: zoonavigator
+  #   ports:
+  #     - 9000:9000
+  #   environment:
+  #     API_HOST: localhost
+  #     HTTP_PORT: 9000

@@ -15,4 +15,13 @@ sysctl vm.swappiness=1
 
 echo "INFO - Starting Kafka Server"
 
+cat $KAFKA_HOME/config/server.properties
+
+if ! [ -z "$KAFKA_AUTHENTICATION" ]; then
+
+    if [[ $KAFKA_AUTHENTICATION == KERBEROS ]]; then
+        export KAFKA_OPTS="-Djava.security.auth.login.config="$KAFKA_HOME"/config/kerberos_server_jaas.conf -Djava.security.krb5.conf="$KAFKA_HOME"/config/krb5.conf -Dzookeeper.sasl.clientconfig=ZkClient"
+    fi
+fi
+
 $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties

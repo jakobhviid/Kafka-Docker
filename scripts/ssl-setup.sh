@@ -2,6 +2,10 @@
 if [[ -f "/ssl/kafka.server.keystore.jks" && -f "/ssl/kafka.server.truststore.jks" ]]; then
     echo "INFO - Keystore and truststore already exists. Using those"
 else
+    if [ -z "$KAFKA_CERTIFICATE_AUTHORITY_URL" ]; then
+        echo -e "\e[1;32mERROR - Missing KAFKA_CERTIFICATE_AUTHORITY_URL \e[0m"
+        exit 1
+    fi
     # Load helper functions for configuring kafka server.properties
     . properties-helper.sh
 
@@ -9,7 +13,7 @@ else
     export SRVPASS=serversecret
 
     # Generating a new key. CN refers to hostname. A client compares the CN in the server certificate to the DNS host name in the URL.
-    keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365 -dname "CN=$KAFKA_TLS_SERVER_DNS_HOSTNAME" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
+    keytool -genkey -keystore /ssl/kafka.server.keystore.jks -alias localhost -validity 365 -dname "CN=$KAFKA_SSL_SERVER_HOSTNAME" -storepass $SRVPASS -keypass $SRVPASS -storetype pkcs12
 
     # Creating a certification request file, to be signed by the CA
     keytool -keystore /ssl/kafka.server.keystore.jks -alias localhost -certreq -file /ssl/cert-file -storepass $SRVPASS -keypass $SRVPASS
