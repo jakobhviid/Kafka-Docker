@@ -23,19 +23,24 @@ services:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zoo:2181
       # Kafka will listen with plaintext, because they are on a private network and therefore the delay added by authentication can be removed
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9094,SASL_SSL://0.0.0.0:9095
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9094,SASL_SSL://localhost:9095
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9094,SASL_PLAINTEXT://0.0.0.0:9095
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9094,SASL_PLAINTEXT://192.168.1.107:9095
       # Kafka will enable SSL by reaching out to KAFKA_CERTIFICATE_AUTHORITY_URL and getting a signed certificate for encrypted traffic between the broker and clients
       KAFKA_SSL_SERVER_HOSTNAME: localhost
       KAFKA_CERTIFICATE_AUTHORITY_URL: ca:5000
       # Kafka will enable Kerberos as authentication scheme in order to identify clients in order to create acls
       KAFKA_AUTHENTICATION: KERBEROS
-      # In order to enable Kerberos a principal (the user kafka should use) is needed for the kafka
+      KERBEROS_PUBLIC_URL: 134.209.204.101
+      KERBEROS_REALM: KAFKA.SECURE
+      KERBEROS_ZOOKEEPER: "false"
+      # In order to enable Kerberos a principal (user) is needed
       KERBEROS_PRINCIPAL: kafka/localhost@KAFKA.SECURE
       KAFKA_HEAP_OPTS: "-Xmx4G"
     volumes:
       # In order to enable Kerberos kafka requires a keytab it can use as lookup to see clients identity
       - ./kafka.service.keytab:/sasl/kafka.service.keytab
+      # It's also possible to provide a truststore and a keystore to set up ssl without using cfei certificate authority
+      # - ./:/ssl/
     depends_on:
       - zoo
       - ca

@@ -78,7 +78,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
         # test if a keytab has been provided and if it's in the expected directory
         keytab_location=/sasl/kafka.service.keytab
         if ! [[ -f "${keytab_location}" ]]; then
-            echo -e "\e[1;32mERROR - Missing kerberos keytab file '/sasl/kafka.service.keytab'. This is required to enable kerberos \e[0m"
+            echo -e "\e[1;32mERROR - Missing kerberos keytab file '/sasl/kafka.service.keytab'. This is required to enable kerberos. Provide it with a docker volume or docker mount \e[0m"
             exit 1
         fi
 
@@ -89,11 +89,28 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
             set_principal_in_jaas_file "$KAFKA_HOME"/config/kerberos_server_jaas.conf "$KERBEROS_PRINCIPAL"
         fi
 
+        if [[ -z "${KERBEROS_PUBLIC_URL}" ]]; then
+            echo -e "\e[1;32mERROR - Missing 'KERBEROS_PUBLIC_URL' environment variable. This is required to enable kerberos \e[0m"
+            exit 1
+        fi
+
+        if [[ -z "${KERBEROS_REALM}" ]]; then
+            echo -e "\e[1;32mERROR - Missing 'KERBEROS_REALM' environment variable. This is required to enable kerberos \e[0m"
+            exit 1
+        fi
+
+        if ! [[ -z "${KERBEROS_ZOOKEEPER}" ]]; then
+            if [[ "$KERBEROS_ZOOKEEPER" == "true" ]]; then
+                echo "INFO - 'KERBEROS_ZOOKEEPER' is set. Kafka will connect to zookeeper with kerberos "
+                printf "\nZkClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\"/sasl/kafka.service.keytab\"\n\tprincipal=\""${KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
+            fi
+        fi
+
         # server configuration
         set_property sasl.enabled.mechanisms GSSAPI
         set_property sasl.kerberos.service.name kafka
-        set_property ssl.client.auth required
-        # TODO - set realm and kerberos hostname in kerberos files based on environment variable
+
+        configure_kerberos_server_in_krb5_file "$KERBEROS_REALM" "$KERBEROS_PUBLIC_URL"
     fi
 fi
 

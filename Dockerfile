@@ -26,10 +26,11 @@ RUN mkdir /ssl/ && mkdir /ssl/healthcheck && mkdir /sasl
 
 EXPOSE 9092 9093
 
-# HEALTHCHECK --interval=75s --timeout=60s --start-period=15s --retries=2 CMD [ "healthcheck.sh" ]
+HEALTHCHECK --interval=75s --timeout=60s --start-period=25s --retries=2 CMD [ "healthcheck.sh" ]
 
 ENV KAFKA_DATA_HOME=/data/kafka
 ENV KAFKA_SSL_HOME=/ssl
+ENV KAFKA_SASL_HOME=/sasl
 ENV KAFKA_LOGS=${KAFKA_HOME}/logs
 
 VOLUME [ ${KAFKA_DATA_HOME}, ${KAFKA_SSL_HOME} ]
