@@ -100,6 +100,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
         fi
 
         if ! [[ -z "${KERBEROS_ZOOKEEPER}" ]]; then
+            shopt -s nocasematch # ignore case of 'true'
             if [[ "$KERBEROS_ZOOKEEPER" == "true" ]]; then
                 echo "INFO - 'KERBEROS_ZOOKEEPER' is set. Kafka will connect to zookeeper with kerberos "
                 printf "\nZkClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\"/sasl/kafka.service.keytab\"\n\tprincipal=\""${KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
