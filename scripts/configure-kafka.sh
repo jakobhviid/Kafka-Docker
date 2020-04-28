@@ -73,20 +73,21 @@ fi
 
 # If this is set it means some authentication should be enabled. Currently only Kerberos is supported, but this can be extended if needed to OAUTHBEARER, 2-WAY SSL etc.
 if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
+    shopt -s nocasematch # ignore case of 'kerberos'
     if [[ ${KAFKA_AUTHENTICATION} == KERBEROS ]]; then
 
         # test if a keytab has been provided and if it's in the expected directory
-        keytab_location=/sasl/kafka.service.keytab
-        if ! [[ -f "${keytab_location}" ]]; then
-            echo -e "\e[1;32mERROR - Missing kerberos keytab file '/sasl/kafka.service.keytab'. This is required to enable kerberos. Provide it with a docker volume or docker mount \e[0m"
+        kafka_keytab_location=/sasl/kafka.service.keytab
+        if ! [[ -f "${kafka_keytab_location}" ]]; then
+            echo -e "\e[1;32mERROR - Missing kafka kerberos keytab file '"$kafka_keytab_location"'. This is required to enable kerberos. Provide it with a docker volume or docker mount \e[0m"
             exit 1
         fi
 
-        if [[ -z "${KERBEROS_PRINCIPAL}" ]]; then
-            echo -e "\e[1;32mERROR - Missing 'KERBEROS_PRINCIPAL' environment variable. This is required to enable kerberos \e[0m"
+        if [[ -z "${KAFKA_KERBEROS_PRINCIPAL}" ]]; then
+            echo -e "\e[1;32mERROR - Missing 'KAFKA_KERBEROS_PRINCIPAL' environment variable. This is required to enable kerberos \e[0m"
             exit 1
         else
-            set_principal_in_jaas_file "$KAFKA_HOME"/config/kerberos_server_jaas.conf "$KERBEROS_PRINCIPAL"
+            set_principal_in_jaas_file "$KAFKA_HOME"/config/kerberos_server_jaas.conf "$KAFKA_KERBEROS_PRINCIPAL"
         fi
 
         if [[ -z "${KERBEROS_PUBLIC_URL}" ]]; then
@@ -99,12 +100,17 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
             exit 1
         fi
 
-        if ! [[ -z "${KERBEROS_ZOOKEEPER}" ]]; then
-            shopt -s nocasematch # ignore case of 'true'
-            if [[ "$KERBEROS_ZOOKEEPER" == "true" ]]; then
-                echo "INFO - 'KERBEROS_ZOOKEEPER' is set. Kafka will connect to zookeeper with kerberos "
-                printf "\nZkClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\"/sasl/kafka.service.keytab\"\n\tprincipal=\""${KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
+        if [[ -z "${ZOOKEEPER_KERBEROS_PRINCIPAL}" ]]; then
+            echo -e "\e[1;32mERROR - Missing 'ZOOKEEPER_KERBEROS_PRINCIPAL' environment variable. This is required to enable kerberos communication with zookeeper! \e[0m"
+        else
+            # test if a zookeeper keytab has been provided and if it's in the expected directory
+            zookeeper_keytab_location=/sasl/zookeeper.service.keytab
+            if ! [[ -f "${zookeeper_keytab_location}" ]]; then
+                echo -e "\e[1;32mERROR - Missing zookeeper kerberos keytab file '"$zookeeper_keytab_location"'. This is required to enable kerberos authentication with zookeeper. Provide it with a docker volume or docker mount \e[0m"
+                exit 1
             fi
+            echo "INFO - 'ZOOKEEPER_KERBEROS_PRINCIPAL' is set, and a zookeeper keytab has been provided! Kafka will connect to zookeeper with kerberos "
+            printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
         fi
 
         # server configuration
