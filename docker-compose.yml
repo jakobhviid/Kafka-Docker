@@ -1,23 +1,23 @@
 version: "3"
 
 services:
-  zoo:
-    image: omvk97/zookeeper
-    container_name: zookeeper
-    restart: always
-    ports:
-      - "2181:2181"
-      - "2888:2888"
-      - "3888:3888"
-    environment:
-      ZOO_ID: 1
-      ZOO_PORT: 2181
-      ZOO_AUTHENTICATION: KERBEROS
-      KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
-      KERBEROS_PUBLIC_URL: 134.209.204.101
-      KERBEROS_REALM: KAFKA.SECURE
-    volumes:
-      - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
+  # zoo:
+  #   image: omvk97/zookeeper
+  #   container_name: zookeeper
+  #   restart: always
+  #   ports:
+  #     - "2181:2181"
+  #     - "2888:2888"
+  #     - "3888:3888"
+  #   environment:
+  #     ZOO_ID: 1
+  #     ZOO_PORT: 2181
+  #     ZOO_AUTHENTICATION: KERBEROS
+  #     KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
+  #     KERBEROS_PUBLIC_URL: 134.209.204.101
+  #     KERBEROS_REALM: KAFKA.SECURE
+  #   volumes:
+  #     - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
 
   kafka:
     image: omvk97/kafka
@@ -53,11 +53,3 @@ services:
       - 5001:5000
     volumes:
       - ./cert-auth:/ssl/
-  # zoonavigator:
-  #   image: elkozmon/zoonavigator
-  #   container_name: zoonavigator
-  #   ports:
-  #     - 9000:9000
-  #   environment:
-  #     API_HOST: localhost
-  #     HTTP_PORT: 9000
