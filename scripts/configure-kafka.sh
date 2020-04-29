@@ -122,10 +122,14 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
 fi
 
 if ! [ -z "$KAFKA_ACL_ENABLE" ]; then
+    if ! [ -z "$KAFKA_ACL_SUPER_USERS" ]; then
+        set_property super.users "$KAFKA_ACL_SUPER_USERS"
+    fi
+
+    if ! [ -z "$KAFKA_ZOOKEEPER_SET_ACL" ]; then
+        set_property zookeeper.set.acl true
+    fi
+    
     set_property authorizer.class.name kafka.security.auth.SimpleAclAuthorizer
     set_property allow.everyone.if.no.acl.found false
-fi
-
-if ! [ -z "$KAFKA_ACL_SUPER_USERS" ]; then
-    set_property super.users "$KAFKA_ACL_SUPER_USERS"
 fi

@@ -78,7 +78,11 @@ services:
 
 - `KAFKA_KERBEROS_PRINCIPAL`: The realm to use from the kerberos server for kafka. Required for [Kerberos setup](#kerberos).
 
-- `ZOOKEEPER_KERBEROS_PRINCIPAL`: If zookeeper is configured to use kerberos, the principal to use to connect to zookeeper is provided with this environment variable. Required for Kerberos connection to zookeeper
+- `ZOOKEEPER_KERBEROS_PRINCIPAL`: If zookeeper is configured to use kerberos, the principal to use to connect to zookeeper is provided with this environment variable. Required for Kerberos connection to zookeeper.
+
+- `KAFKA_ACL_ENABLE`: This will enable kafka.security.auth.SimpleAclAuthorizer. Required for [ACL setup[(#acl).
+
+- `KAFKA_ACL_SUPER_USERS`: If ACL has been set, it's possible to configure super users. These users will have access to all topics and all operations on these topics.
 
 # <a name="volumes"></a> Volumes
 
@@ -87,7 +91,7 @@ services:
 - `/ssl/`: The directory where the keystore and truststore for SSL setup is stored, this can be mounted if you want to provide your own keystores and truststores which stops the container from making it's own stores.
 - `/sasl/kafka.service.keytab`: The kerberos keytab kafka should use when configured with kerberos. Required for [Kerberos setup](#kerberos).
 
-# <a name="security"></a> Security **UNDER CONSTRUCTION**
+# <a name="security"></a> Security
 
 ## <a name="ssl"></a> SSL/TLS
 
@@ -185,6 +189,33 @@ services:
 
 ## <a name="acl"></a> ACL (Access Control Lists)
 
-In order for Access Control Lists to work you need to have authentication working first.
+In order for Access Control Lists to work you need to have authentication working first [See Kerberos setup](#kerberos).
+When Kerberos has been setup correctly, you can then use the two environment variable `KAFKA_ACL_ENABLE` and `KAFKA_ACL_SUPER_USERS` to use Access Control Lists.
 
+#### docker-compose kafka acl example
 
+```
+version: "3"
+
+services:
+  kafka:
+    image: cfei/kafka
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_AUTHENTICATION: KERBEROS
+      KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
+      KERBEROS_REALM: <<kerberos_realm>>
+      KAFKA_KERBEROS_PRINCIPAL: <<kafka_kerberos_principal_name>>@<<kerberos_realm>>
+      ZOOKEEPER_KERBEROS_PRINCIPAL:  <<zookeeper_kerberos_principal_name>>@<<kerberos_realm>>
+      KAFKA_ACL_ENABLE: "true"
+      KAFKA_ACL_SUPER_USERS: User:kafka
+    volumes:
+      - ./kafka.service.keytab:/sasl/kafka.service.keytab
+      - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
+```

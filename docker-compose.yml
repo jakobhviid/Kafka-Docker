@@ -22,6 +22,7 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx4G"
       KAFKA_ACL_ENABLE: "true"
       KAFKA_ACL_SUPER_USERS: User:kafka
+      KAFKA_ZOOKEEPER_SET_ACL: "true"
     volumes:
       - ./kafka.service.keytab:/sasl/kafka.service.keytab
       - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
