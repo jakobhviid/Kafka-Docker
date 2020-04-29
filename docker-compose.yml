@@ -1,24 +1,6 @@
 version: "3"
 
 services:
-  # zoo:
-  #   image: omvk97/zookeeper
-  #   container_name: zookeeper
-  #   restart: always
-  #   ports:
-  #     - "2181:2181"
-  #     - "2888:2888"
-  #     - "3888:3888"
-  #   environment:
-  #     ZOO_ID: 1
-  #     ZOO_PORT: 2181
-  #     ZOO_AUTHENTICATION: KERBEROS
-  #     KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
-  #     KERBEROS_PUBLIC_URL: 134.209.204.101
-  #     KERBEROS_REALM: KAFKA.SECURE
-  #   volumes:
-  #     - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
-
   kafka:
     image: omvk97/kafka
     container_name: kafka
@@ -27,23 +9,24 @@ services:
       - 9095:9095
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zoo:2181
+      KAFKA_ZOOKEEPER_CONNECT: 142.93.227.245:2181
       KAFKA_LISTENERS: INTERNAL://0.0.0.0:9094,SASL_PLAINTEXT://0.0.0.0:9095
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://localhost:9094,SASL_PLAINTEXT://192.168.1.107:9095
-      KAFKA_SSL_SERVER_HOSTNAME: localhost
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://192.168.1.107:9094,SASL_PLAINTEXT://192.168.1.107:9095
+      KAFKA_SSL_SERVER_HOSTNAME: 192.168.1.107
       KAFKA_CERTIFICATE_AUTHORITY_URL: ca:5000
       KAFKA_AUTHENTICATION: KERBEROS
       KERBEROS_PUBLIC_URL: 134.209.204.101
       KERBEROS_REALM: KAFKA.SECURE
-      KAFKA_KERBEROS_PRINCIPAL: kafka/localhost@KAFKA.SECURE
-      ZOOKEEPER_KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
+      KAFKA_KERBEROS_PRINCIPAL: kafka/192.168.1.107@KAFKA.SECURE
+      ZOOKEEPER_KERBEROS_PRINCIPAL: zookeeper/142.93.227.245@KAFKA.SECURE
       KAFKA_HEAP_OPTS: "-Xmx4G"
+      KAFKA_ACL_ENABLE: "true"
+      KAFKA_ACL_SUPER_USERS: User:kafka
     volumes:
       - ./kafka.service.keytab:/sasl/kafka.service.keytab
       - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
     depends_on:
       - ca
-      - zoo
 
   ca:
     image: omvk97/ca
