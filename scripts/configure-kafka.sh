@@ -112,9 +112,9 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
             echo "INFO - 'ZOOKEEPER_KERBEROS_PRINCIPAL' is set, and a zookeeper keytab has been provided! Kafka will connect to zookeeper with kerberos "
 
             # Deleting previous client configuration if already specified
-            client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf
+            client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf)
             if  ! [[ -z "$client_line" ]]; then
-                sed -i "'"$client_line"',$d" $KAFKA_HOME/config/kerberos_server_jaas.conf
+                sed -i ''"$client_line"',$d' $KAFKA_HOME/config/kerberos_server_jaas.conf
             fi
             
             printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
@@ -139,4 +139,8 @@ if ! [ -z "$KAFKA_ACL_ENABLE" ]; then
     
     set_property authorizer.class.name kafka.security.auth.SimpleAclAuthorizer
     set_property allow.everyone.if.no.acl.found false
+fi
+
+if ! [[ -z "$KAFKA_AUTHORIZATION_DEBUG" ]]; then
+    sed -i  "/log4j.logger.kafka.authorizer.logger=/ s/=.*/=DEBUG, authorizerAppender /" "$KAFKA_HOME"/config/log4j.properties
 fi
