@@ -76,20 +76,6 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
     shopt -s nocasematch # ignore case of 'kerberos'
     if [[ ${KAFKA_AUTHENTICATION} == KERBEROS ]]; then
 
-        # test if a keytab has been provided and if it's in the expected directory
-        kafka_keytab_location=/sasl/kafka.service.keytab
-        if ! [[ -f "${kafka_keytab_location}" ]]; then
-            echo -e "\e[1;32mERROR - Missing kafka kerberos keytab file '"$kafka_keytab_location"'. This is required to enable kerberos. Provide it with a docker volume or docker mount \e[0m"
-            exit 1
-        fi
-
-        if [[ -z "${KAFKA_KERBEROS_PRINCIPAL}" ]]; then
-            echo -e "\e[1;32mERROR - Missing 'KAFKA_KERBEROS_PRINCIPAL' environment variable. This is required to enable kerberos \e[0m"
-            exit 1
-        else
-            set_principal_in_jaas_file "$KAFKA_HOME"/config/kerberos_server_jaas.conf "$KAFKA_KERBEROS_PRINCIPAL"
-        fi
-
         if [[ -z "${KERBEROS_PUBLIC_URL}" ]]; then
             echo -e "\e[1;32mERROR - Missing 'KERBEROS_PUBLIC_URL' environment variable. This is required to enable kerberos \e[0m"
             exit 1
@@ -100,25 +86,87 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
             exit 1
         fi
 
-        if [[ -z "${ZOOKEEPER_KERBEROS_PRINCIPAL}" ]]; then
-            echo -e "\e[1;32mERROR - Missing 'ZOOKEEPER_KERBEROS_PRINCIPAL' environment variable. This is required to enable kerberos communication with zookeeper! \e[0m"
-        else
-            # test if a zookeeper keytab has been provided and if it's in the expected directory
-            zookeeper_keytab_location=/sasl/zookeeper.service.keytab
-            if ! [[ -f "${zookeeper_keytab_location}" ]]; then
-                echo -e "\e[1;32mERROR - Missing zookeeper kerberos keytab file '"$zookeeper_keytab_location"'. This is required to enable kerberos authentication with zookeeper. Provide it with a docker volume or docker mount \e[0m"
+        kafka_keytab_location=/sasl/kafka.service.keytab
+        # If they haven't provided their own keytabs in volumes, it is tested if they have provided the necessary environment variables to download the keytab from an API
+        if [[ -z "${KAFKA_KERBEROS_PRINCIPAL}" ]]; then
+            if [[ -z "${KERBEROS_API_URL}" ]]; then
+                echo -e "\e[1;32mERROR - One of either 'KAFKA_KERBEROS_PRINCIPAL' or 'KERBEROS_API_URL' must be supplied! It is required to enable kerberos for kafka! \e[0m"
                 exit 1
-            fi
-            echo "INFO - 'ZOOKEEPER_KERBEROS_PRINCIPAL' is set, and a zookeeper keytab has been provided! Kafka will connect to zookeeper with kerberos "
+            else # the user wants to use a kerberos api to get keytabs
 
-            # Deleting previous client configuration if already specified
-            client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf)
-            if  ! [[ -z "$client_line" ]]; then
-                sed -i ''"$client_line"',$d' $KAFKA_HOME/config/kerberos_server_jaas.conf
+                # Test for all the required environment variables
+                if [[ -z "${KERBEROS_API_KAFKA_USERNAME}" ]]; then
+                    echo -e "\e[1;32mERROR - Missing 'KERBEROS_API_KAFKA_USERNAME' environment variable. This is required to use kerberos API for kafka keytab \e[0m"
+                    exit 1
+                fi
+                if [[ -z "${KERBEROS_API_KAFKA_PASSWORD}" ]]; then
+                    echo -e "\e[1;32mERROR - Missing 'KERBEROS_API_KAFKA_PASSWORD' environment variable. This is required to use kerberos API for kafka keytab \e[0m"
+                    exit 1
+                fi
+
+                export KAFKA_KERBEROS_PRINCIPAL="$KERBEROS_API_KAFKA_USERNAME"@"$KERBEROS_REALM"
+                # response will be 'FAIL' if it can't connect or if the url returned an error
+                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KERBEROS_API_KAFKA_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of 'KERBEROS_API_KAFKA_USERNAME'@'KERBEROS_REALM'" || echo "FAIL" )
+                if [ "$response" == "FAIL" ]; then
+                    echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching kafka keytab. See curl error above for further details \e[0m"
+                    exit 1
+                fi
             fi
-            
-            printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
+        else # The user has supplied their own principals
+
+            # test if a keytab has been provided and if it's in the expected directory
+            if ! [[ -f "${kafka_keytab_location}" ]]; then
+                echo -e "\e[1;32mERROR - Missing kafka kerberos keytab file '"$kafka_keytab_location"'. This is required to enable kerberos when 'KAFKA_KERBEROS_PRINCIPAL' is supplied. Provide it with a docker volume or docker mount \e[0m"
+                exit 1
+            else
+                echo "INFO - Using the supplied keytab and the principal from environment variable 'KAFKA_KERBEROS_PRINCIPAL' "
+            fi
         fi
+        # Setting the principal which will either be from the environment variable or the export if the kerberos API is to be used
+        set_principal_in_jaas_file "$KAFKA_HOME"/config/kerberos_server_jaas.conf "$KAFKA_KERBEROS_PRINCIPAL"
+
+        zookeeper_keytab_location=/sasl/zookeeper.service.keytab
+        # If they haven't provided their own keytabs in volumes, it is tested if they have provided the necessary environment variables to download the keytab from an API
+        if [[ -z "${ZOOKEEPER_KERBEROS_PRINCIPAL}" ]]; then
+            if [[ -z "${KERBEROS_API_URL}" ]]; then
+                echo -e "\e[1;32mERROR - One of either 'ZOOKEEPER_KERBEROS_PRINCIPAL' or 'KERBEROS_API_URL' must be supplied! It is required to enable kerberos for zookeeper! \e[0m"
+                exit 1
+            else # User wants to use the kerberos API
+                if [[ -z "${KERBEROS_API_ZOOKEEPER_USERNAME}" ]]; then
+                    echo -e "\e[1;32mERROR - Missing 'KERBEROS_API_ZOOKEEPER_USERNAME' environment variable. This is required to use kerberos API for zookeeper keytab \e[0m"
+                    exit 1
+                fi
+                if [[ -z "${KERBEROS_API_ZOOKEEPER_PASSWORD}" ]]; then
+                    echo -e "\e[1;32mERROR - Missing 'KERBEROS_API_ZOOKEEPER_PASSWORD' environment variable. This is required to use kerberos API for zookeeper keytab \e[0m"
+                    exit 1
+                fi
+
+                export ZOOKEEPER_KERBEROS_PRINCIPAL="$KERBEROS_API_ZOOKEEPER_USERNAME"@"$KERBEROS_REALM"
+
+                # response will be 'FAIL' if it can't connect or if the url returned an error
+                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of 'KERBEROS_API_ZOOKEEPER_USERNAME'@'KERBEROS_REALM'" || echo "FAIL" )
+                if [ "$response" == "FAIL" ]; then
+                    echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching zookeeper keytab. See curl error above for further details \e[0m"
+                    exit 1
+                fi
+            fi
+        else # the user has supplied their own zookeeper keytab
+            # test if it's in the expected directory
+            if ! [[ -f "${zookeeper_keytab_location}" ]]; then
+                echo -e "\e[1;32mERROR - Missing zookeeper kerberos keytab file '"$zookeeper_keytab_location"'. This is required to enable kerberos authentication with zookeeper when ''ZOOKEEPER_KERBEROS_PRINCIPAL' is provided. Provide it with a docker volume or docker mount \e[0m"
+                exit 1
+            else
+                echo "INFO - Using the supplied keytab and the principal from environment variable 'ZOOKEEPER_KERBEROS_PRINCIPAL' "
+            fi
+        fi
+
+        # Deleting previous client configuration if already specified
+        client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf)
+        if ! [[ -z "$client_line" ]]; then
+            sed -i ''"$client_line"',$d' $KAFKA_HOME/config/kerberos_server_jaas.conf
+        fi
+
+        printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
 
         # server configuration
         set_property sasl.enabled.mechanisms GSSAPI
@@ -136,11 +184,11 @@ if ! [ -z "$KAFKA_ACL_ENABLE" ]; then
     if ! [ -z "$KAFKA_ZOOKEEPER_SET_ACL" ]; then
         set_property zookeeper.set.acl true
     fi
-    
+
     set_property authorizer.class.name kafka.security.auth.SimpleAclAuthorizer
     set_property allow.everyone.if.no.acl.found false
 fi
 
 if ! [[ -z "$KAFKA_AUTHORIZATION_DEBUG" ]]; then
-    sed -i  "/log4j.logger.kafka.authorizer.logger=/ s/=.*/=DEBUG, authorizerAppender /" "$KAFKA_HOME"/config/log4j.properties
+    sed -i "/log4j.logger.kafka.authorizer.logger=/ s/=.*/=DEBUG, authorizerAppender /" "$KAFKA_HOME"/config/log4j.properties
 fi

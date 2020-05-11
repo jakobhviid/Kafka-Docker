@@ -2,7 +2,7 @@ version: "3"
 
 services:
   kafka:
-    image: cfei/kafka:2.0.0-beta
+    image: omvk97/kafka
     container_name: kafka
     ports:
       - 9092:9092
@@ -12,15 +12,21 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zoo:2181
       KAFKA_LISTENERS: INTERNAL_SASL_PLAINTEXT://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL_PLAINTEXT://localhost:9092,SASL_PLAINTEXT://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_SASL_PLAINTEXT
       KAFKA_AUTHENTICATION: KERBEROS
       KERBEROS_PUBLIC_URL: 128.199.53.160
       KERBEROS_REALM: KAFKA.SECURE
-      KAFKA_KERBEROS_PRINCIPAL: kafka/localhost@KAFKA.SECURE
-      ZOOKEEPER_KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
+      KERBEROS_API_URL: "http://172.19.0.1:3000/get-keytab"
+      KERBEROS_API_KAFKA_USERNAME: kafka/localhost
+      KERBEROS_API_KAFKA_PASSWORD: kafkaPasswordTester
+      KERBEROS_API_ZOOKEEPER_USERNAME: zookeeper/localhost
+      KERBEROS_API_ZOOKEEPER_PASSWORD: zookeeperPasswordTester
+      # KAFKA_KERBEROS_PRINCIPAL: kafka/localhost@KAFKA.SECURE
+      # ZOOKEEPER_KERBEROS_PRINCIPAL: zookeeper/localhost@KAFKA.SECURE
       KAFKA_HEAP_OPTS: "-Xmx4G"
       KAFKA_ACL_ENABLE: "true"
-      KAFKA_ACL_SUPER_USERS: User:kafka
+      KAFKA_ACL_SUPER_USERS: User:kafka;User:admin
       KAFKA_ZOOKEEPER_SET_ACL: "true"
-    volumes:
-      - ./kafka.service.keytab:/sasl/kafka.service.keytab
-      - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
+    # volumes:
+    #   - ./kafka.service.keytab:/sasl/kafka.service.keytab
+    #   - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
