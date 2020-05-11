@@ -106,7 +106,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
 
                 export KAFKA_KERBEROS_PRINCIPAL="$KERBEROS_API_KAFKA_USERNAME"@"$KERBEROS_REALM"
                 # response will be 'FAIL' if it can't connect or if the url returned an error
-                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KERBEROS_API_KAFKA_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of 'KERBEROS_API_KAFKA_USERNAME'@'KERBEROS_REALM'" || echo "FAIL" )
+                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KERBEROS_API_KAFKA_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KERBEROS_API_KAFKA_USERNAME"'@'"$KERBEROS_REALM"'" || echo "FAIL" )
                 if [ "$response" == "FAIL" ]; then
                     echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching kafka keytab. See curl error above for further details \e[0m"
                     exit 1
@@ -144,7 +144,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
                 export ZOOKEEPER_KERBEROS_PRINCIPAL="$KERBEROS_API_ZOOKEEPER_USERNAME"@"$KERBEROS_REALM"
 
                 # response will be 'FAIL' if it can't connect or if the url returned an error
-                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of 'KERBEROS_API_ZOOKEEPER_USERNAME'@'KERBEROS_REALM'" || echo "FAIL" )
+                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KERBEROS_API_ZOOKEEPER_USERNAME"'@'"$KERBEROS_REALM"'" || echo "FAIL" )
                 if [ "$response" == "FAIL" ]; then
                     echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching zookeeper keytab. See curl error above for further details \e[0m"
                     exit 1
@@ -160,13 +160,15 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
             fi
         fi
 
-        # Deleting previous client configuration if already specified
-        client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf)
-        if ! [[ -z "$client_line" ]]; then
-            sed -i ''"$client_line"',$d' $KAFKA_HOME/config/kerberos_server_jaas.conf
-        fi
+        if ! [[ -z "${ZOOKEEPER_KERBEROS_PRINCIPAL}" ]]; then
+            # Deleting previous client configuration if already specified
+            client_line=$(awk '/Client/{ print NR; exit }' $KAFKA_HOME/config/kerberos_server_jaas.conf)
+            if ! [[ -z "$client_line" ]]; then
+                sed -i ''"$client_line"',$d' $KAFKA_HOME/config/kerberos_server_jaas.conf
+            fi
 
-        printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
+            printf "\nClient {\n\tcom.sun.security.auth.module.Krb5LoginModule required\n\tuseKeyTab=true\n\tstoreKey=true\n\tkeyTab=\""$zookeeper_keytab_location"\"\n\tprincipal=\""${ZOOKEEPER_KERBEROS_PRINCIPAL}"\";\n};\n" >>$KAFKA_HOME/config/kerberos_server_jaas.conf
+        fi
 
         # server configuration
         set_property sasl.enabled.mechanisms GSSAPI

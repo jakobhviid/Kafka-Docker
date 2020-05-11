@@ -16,8 +16,8 @@ services:
     container_name: kafka
     restart: always
     ports:
-      - "9092:9092"
-      - "9093:9093"
+      - 9092:9092
+      - 9093:9093
     volumes:
       - ./data:/data/kafka
     environment:
@@ -68,7 +68,7 @@ services:
 
 - `KAFKA_CERTIFICATE_AUTHORITY_URL`: URL of the certificate authority to be used. This is meant for cfei/certificate_authority use. If you want to use your own certificate. See [volumes](#volumes) /ssl/.
 
-- `KAFKA_AUTHENTICATION`: Authentication schema to use. Currently only Kerberos is supported. Set to 'KERBEROS' for a kerberus setup. Required for [Kerberos setup](#kerberos).
+- `KAFKA_AUTHENTICATION`: Authentication schema to use. Currently only Kerberos is supported. Set to 'KERBEROS' for a Kerberos setup. Required for [Kerberos setup](#kerberos).
 
 - `KERBEROS_PUBLIC_URL`: Public DNS of the kerberos server to use. Required for [Kerberos setup](#kerberos).
 
@@ -76,13 +76,27 @@ services:
 
 - `KERBEROS_REALM`: The realm to use on the kerberos server. Required for [Kerberos setup](#kerberos).
 
-- `KAFKA_KERBEROS_PRINCIPAL`: The realm to use from the kerberos server for kafka. Required for [Kerberos setup](#kerberos).
+- `KERBEROS_API_URL`: The URL to use when kafka fetches keytabs from a kerberos server. The URL has to point to an HTTP GET Endpoint. The image will then supply the values of 'KERBEROS_API_KAFKA_USERNAME' and 'KERBEROS_API_KAFKA_PASSWORD' to the GET request. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
 
-- `ZOOKEEPER_KERBEROS_PRINCIPAL`: If zookeeper is configured to use kerberos, the principal to use to connect to zookeeper is provided with this environment variable. Required for Kerberos connection to zookeeper.
+- `KERBEROS_API_KAFKA_USERNAME`: The username to use when fetching the keytab for kafka itself on 'KERBEROS_API_URL'. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
 
-- `KAFKA_ACL_ENABLE`: This will enable kafka.security.auth.SimpleAclAuthorizer. Required for [ACL setup[(#acl).
+- `KERBEROS_API_KAFKA_PASSWORD`: The password to use when fetching the keytab for kafka itself on 'KERBEROS_API_URL'. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
+
+- `KERBEROS_API_ZOOKEEPER_USERNAME`: The username to use when fetching the keytab for zookeeper on 'KERBEROS_API_URL'. Required for [Kerberos Setup with a kerberos API if zookeeper uses kerberos](#kerberos-with).
+
+- `KERBEROS_API_ZOOKEEPER_PASSWORD`: The password to use when fetching the keytab for zookeeper on 'KERBEROS_API_URL'. Required for [Kerberos Setup with a kerberos API if zookeeper uses kerberos](#kerberos-with).
+
+- `KAFKA_KERBEROS_PRINCIPAL`: This environment variable can be used if you would like to supply your own keytabs to the kafka Realm. If your provide this all 'KERBEROS_API...' environment variables is ignored. It is the name of the principal to use for kafka. Required for [Kerberos setup without use of a kerberos API](#kerberos-without) for more details.
+
+- `ZOOKEEPER_KERBEROS_PRINCIPAL`: This environment variable can be used if you would like to supply your own keytabs to the kafka Realm. If your provide this variable, all 'KERBEROS_API...' environment variables is ignored. It is the name of the principal to use for zookeeper. See [Kerberos setup without the use of a kerberos API](#kerberos-without) for more details.
+
+- `KAFKA_ACL_ENABLE`: This will enable kafka.security.auth.SimpleAclAuthorizer. Required for [ACL setup](#acl).
 
 - `KAFKA_ACL_SUPER_USERS`: If ACL has been set, it's possible to configure super users. These users will have access to all topics and all operations on these topics.
+
+- `KAFKA_ZOOKEEPER_SET_ACL`: If Zookeeper uses authentication this will enable kafka to create protected Znodes. Which means unauthorised access is not allowed inside the Znodes zookeeper creates. Unauthorised access will still be able to read all the Znodes, but all other permissions is only granted to authorised users inside the protected Znode.
+
+- `KAFKA_AUTHORIZATION_DEBUG`: If you are experiencing problems with ACLs it can be a benefit to active debug level logging. This will enable log4j to print out a lot more details to authorization inside KAFKA_HOME/logs/kafka-authorizer.
 
 # <a name="volumes"></a> Volumes
 
@@ -126,12 +140,67 @@ services:
 
 ## <a name="authentication"></a> Authentication
 
-### <a name="kerberos"></a> Kerberos
-#### docker-compose kafka kerberos example
+### <a name="kerberos-with"></a> Kerberos setup with a kerberos API
 
 This is a Kerberos setup where zookeeper is on a private network and therefore does not use kerberos. See next example for kafka kerberos authentication with a zookeeper kerberos server.
 
-This docker-compose example does not use SSL. If you want to use SSL, replace 'INTERNAL', with' INTERNAL_SSL' and set 'KAFKA_INTER_BROKER_LISTENER_NAME' to 'INTERNAL_SSL' (only if broker-broker communication is on a public network). You also need to set 'SASL_PLAINTEXT' to 'SASL_SSL'. 
+This docker-compose example does not use SSL. If you want to use SSL, replace 'INTERNAL_SASL_PLAINTEXT', with' INTERNAL_SASL_SSL' and set 'KAFKA_INTER_BROKER_LISTENER_NAME' to 'INTERNAL_SASL_SSL' (only if broker-broker communication is on a public network). You also need to set 'SASL_PLAINTEXT' to 'SASL_SSL'. It is important to set inter broker listener name to a SASL protocol. This is due to kafka being inside a container so it communicates with it's own server to authorise itself. Without a sasl enabled internal listener name it cannot authorise itself and will therefor not be able to authorise anyone else either.
+
+```
+version: "3"
+
+services:
+  kafka:
+    image: cfei/kafka
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
+      KAFKA_LISTENERS: INTERNAL_SASL_PLAINTEXT://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL_PLAINTEXT://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_SASL_PLAINTEXT
+      KAFKA_AUTHENTICATION: KERBEROS
+      KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
+      KERBEROS_REALM: KAFKA.SECURE
+      KERBEROS_API_URL: "<<kerberos_api_public_dns>>/<<get_keytab_endpoint_route>>"
+      KERBEROS_API_KAFKA_USERNAME: <<kerberos_kafka_principal_name>>
+      KERBEROS_API_KAFKA_PASSWORD: <<kerberos_api_kafka_password>>
+```
+
+#### docker-compose kafka and zookeeper kerberos example
+
+This is a kerberos setup where zookeeper is a kerberos enabled zookeeper server. Please note that without access control lists this is not more secure because anonymous users are allowed on a kerberos enabled zookeeper. See ACL example for a secure setup with a zookeeper kerberos enabled server.
+
+It is the same setup as above but with 'KERBEROS_API_ZOOKEEPER_USERNAME' and' KERBEROS_API_ZOOKEEPER_PASSWORD' added.
+
+```
+version: "3"
+
+services:
+  kafka:
+    image: cfei/kafka
+    ports:
+      - 9092:9092
+      - 9093:9093
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
+      KAFKA_LISTENERS: INTERNAL_SASL_PLAINTEXT://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL_PLAINTEXT://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_SASL_PLAINTEXT
+      KAFKA_AUTHENTICATION: KERBEROS
+      KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
+      KERBEROS_REALM: KAFKA.SECURE
+      KERBEROS_API_URL: "<<kerberos_api_public_dns>>/<<get_keytab_endpoint_route>>"
+      KERBEROS_API_KAFKA_USERNAME: <<kerberos_kafka_principal_name>>
+      KERBEROS_API_KAFKA_PASSWORD: <<kerberos_api_kafka_password>>
+      KERBEROS_API_ZOOKEEPER_USERNAME: <<kerberos_zookeeper_principal_name>>
+      KERBEROS_API_ZOOKEEPER_PASSWORD: <<kerberos_api_zookeeper_password>>
+```
+
+### <a name="kerberos-without"></a> Kerberos setup without a kerberos API (supply your own keytabs)
 
 The kafka broker requires a provided keytab in /sasl/kafka.service.keytab
 
@@ -147,52 +216,24 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_LISTENERS: INTERNAL_SASL_PLAINTEXT://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL_PLAINTEXT://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_SASL_PLAINTEXT
       KAFKA_AUTHENTICATION: KERBEROS
       KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
       KERBEROS_REALM: <<kerberos_realm>>
       KAFKA_KERBEROS_PRINCIPAL: <<kafka_kerberos_principal_name>>@<<kerberos_realm>>
+      ZOOKEEPER_KERBEROS_PRINCIPAL: <<zookeeper_kerberos_principal_name>>@<<kerberos_realm>>
     volumes:
       - ./kafka.service.keytab:/sasl/kafka.service.keytab
-```
-
-#### docker-compose kafka and zookeeper kerberos example
-
-This is a kerberos setup where zookeeper is a kerberos enabled zookeeper server. Please note that without access control lists this is not more secure because anonymous users are allowed on a kerberos enabled zookeeper. See ACL example for a secure setup with a zookeeper kerberos enabled server.
-
-It is the same setup as above but with 'ZOOKEEPER_KERBEROS_PRINCIPAL' added and an additonal keytab provided through volumes.
-
-```
-version: "3"
-
-services:
-  kafka:
-    image: cfei/kafka
-    ports:
-      - 9092:9092
-      - 9093:9093
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
-      KAFKA_AUTHENTICATION: KERBEROS
-      KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
-      KERBEROS_REALM: <<kerberos_realm>>
-      KAFKA_KERBEROS_PRINCIPAL: <<kafka_kerberos_principal_name>>@<<kerberos_realm>>
-      ZOOKEEPER_KERBEROS_PRINCIPAL:  <<zookeeper_kerberos_principal_name>>@<<kerberos_realm>>
-    volumes:
-      - ./kafka.service.keytab:/sasl/kafka.service.keytab
-      - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
 ```
 
 ## <a name="acl"></a> ACL (Access Control Lists)
 
 In order for Access Control Lists to work you need to have authentication working first [See Kerberos setup](#kerberos).
-When Kerberos has been setup correctly, you can then use the two environment variable `KAFKA_ACL_ENABLE` and `KAFKA_ACL_SUPER_USERS` to use Access Control Lists.
+When Kerberos has been setup correctly, you can then use the two environment variable `KAFKA_ACL_ENABLE` and `KAFKA_ACL_SUPER_USERS` to use Access Control Lists. **Very important** Note the use of 'KAFKA_ZOOKEEPER_SET_ACL' variable. This ensures that the information kafka stores in zookeeper is protected from anonymous users. By default all information in zookeeper is accessible by everyone. This enables kafka to set Access Control lists on the folders, make sure your zookeeper server supports this.
 
-#### docker-compose kafka acl example
+#### docker-compose kafka ACL example
 
 ```
 version: "3"
@@ -206,16 +247,18 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: <<zookeeper1_ip>>:2181,<<zookeeper2_ip>>:2181,<<zookeeper3_ip>>:2181
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_LISTENERS: INTERNAL_SASL_PLAINTEXT://0.0.0.0:9092,SASL_PLAINTEXT://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_SASL_PLAINTEXT://<<server_ip>>:9092,SASL_PLAINTEXT://<<server_ip>>:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_SASL_PLAINTEXT
       KAFKA_AUTHENTICATION: KERBEROS
       KERBEROS_PUBLIC_URL: <<kerberos_public_dns>>
       KERBEROS_REALM: <<kerberos_realm>>
-      KAFKA_KERBEROS_PRINCIPAL: <<kafka_kerberos_principal_name>>@<<kerberos_realm>>
-      ZOOKEEPER_KERBEROS_PRINCIPAL:  <<zookeeper_kerberos_principal_name>>@<<kerberos_realm>>
+      KERBEROS_API_URL: "<<kerberos_api_public_dns>>/<<get_keytab_endpoint_route>>"
+      KERBEROS_API_KAFKA_USERNAME: <<kerberos_kafka_principal_name>>
+      KERBEROS_API_KAFKA_PASSWORD: <<kerberos_api_kafka_password>>
+      KERBEROS_API_ZOOKEEPER_USERNAME: <<kerberos_zookeeper_principal_name>>
+      KERBEROS_API_ZOOKEEPER_PASSWORD: <<kerberos_api_zookeeper_password>>
       KAFKA_ACL_ENABLE: "true"
       KAFKA_ACL_SUPER_USERS: User:kafka
-    volumes:
-      - ./kafka.service.keytab:/sasl/kafka.service.keytab
-      - ./zookeeper.service.keytab:/sasl/zookeeper.service.keytab
+      KAFKA_ZOOKEEPER_SET_ACL: "true"
 ```

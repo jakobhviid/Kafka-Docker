@@ -2,7 +2,7 @@ version: "3"
 
 services:
   kafka:
-    image: omvk97/kafka
+    image: cfei/kafka:2.0.0-beta
     container_name: kafka
     ports:
       - 9092:9092
