@@ -2,9 +2,9 @@ FROM ubuntu:18.04
 
 ENV KAFKA_HOME=/opt/kafka
 
-RUN apt update && \
-    apt install -y --no-install-recommends openjdk-11-jre-headless && \
-    apt install -y jq curl
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openjdk-11-jre-headless && \
+    apt-get install -y jq curl
 
 # Copy scripts
 COPY scripts /tmp/
