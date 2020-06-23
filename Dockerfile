@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+LABEL MAINTAINER="Oliver Marco van Komen"
+
 ENV KAFKA_HOME=/opt/kafka
 
 RUN apt-get update && \
@@ -26,7 +28,7 @@ RUN mkdir /ssl/ && mkdir /ssl/healthcheck && mkdir /sasl
 
 EXPOSE 9092 9093
 
-HEALTHCHECK --interval=75s --timeout=60s --start-period=25s --retries=2 CMD [ "healthcheck.sh" ]
+# HEALTHCHECK --interval=75s --timeout=60s --start-period=25s --retries=2 CMD [ "healthcheck.sh" ]
 
 ENV KAFKA_DATA_HOME=/data/kafka
 ENV KAFKA_SSL_HOME=/ssl

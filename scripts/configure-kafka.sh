@@ -141,7 +141,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
                     exit 1
                 fi
 
-                export ZOOKEEPER_KERBEROS_PRINCIPAL="$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"@"$KAFKA_KERBEROS_REALM"
+                export KAFKA_ZOOKEEPER_KERBEROS_PRINCIPAL="$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"@"$KAFKA_KERBEROS_REALM"
 
                 # response will be 'FAIL' if it can't connect or if the url returned an error
                 response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL" )
