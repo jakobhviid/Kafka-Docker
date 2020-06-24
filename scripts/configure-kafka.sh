@@ -106,7 +106,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
 
                 export KAFKA_KERBEROS_PRINCIPAL="$KAFKA_KERBEROS_API_KAFKA_USERNAME"@"$KAFKA_KERBEROS_REALM"
                 # response will be 'FAIL' if it can't connect or if the url returned an error
-                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_KAFKA_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_KAFKA_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL" )
+                response=$(curl --fail -X POST -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_KAFKA_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_KAFKA_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL" )
                 if [ "$response" == "FAIL" ]; then
                     echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching kafka keytab. See curl error above for further details \e[0m"
                     exit 1
@@ -144,7 +144,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
                 export KAFKA_ZOOKEEPER_KERBEROS_PRINCIPAL="$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"@"$KAFKA_KERBEROS_REALM"
 
                 # response will be 'FAIL' if it can't connect or if the url returned an error
-                response=$(curl --fail -X GET -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL" )
+                response=$(curl --fail -X POST -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL" )
                 if [ "$response" == "FAIL" ]; then
                     echo -e "\e[1;32mERROR - Kerberos API did not succeed when fetching zookeeper keytab. See curl error above for further details \e[0m"
                     exit 1
