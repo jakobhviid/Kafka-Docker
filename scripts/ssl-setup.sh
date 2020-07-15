@@ -3,7 +3,7 @@ if [[ -f "/ssl/kafka.server.keystore.jks" && -f "/ssl/kafka.server.truststore.jk
     echo "INFO - Keystore and truststore already exists. Using those"
 else
     if [ -z "$KAFKA_CERTIFICATE_AUTHORITY_URL" ]; then
-        echo -e "\e[1;32mERROR - Missing KAFKA_CERTIFICATE_AUTHORITY_URL \e[0m"
+        echo -e "\e[1;31mERROR - Missing KAFKA_CERTIFICATE_AUTHORITY_URL \e[0m"
         exit 1
     fi
     # Load helper functions for configuring kafka server.properties
