@@ -112,7 +112,7 @@ services:
 
 - `KERBEROS_REALM`: The realm to use on the kerberos server. Required for [Kerberos setup](#kerberos-with).
 
-- `KERBEROS_API_URL`: The URL to use when kafka fetches keytabs from a kerberos server. The URL has to point to an HTTP GET Endpoint. The image will then supply the values of 'KERBEROS_API_KAFKA_USERNAME' and 'KERBEROS_API_KAFKA_PASSWORD' to the GET request. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
+- `KERBEROS_API_URL`: The URL to use when kafka fetches keytabs from a kerberos server. The URL has to point to an HTTP POST Endpoint. The image will then supply the values of 'KERBEROS_API_KAFKA_USERNAME' and 'KERBEROS_API_KAFKA_PASSWORD' to the request. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
 
 - `KERBEROS_API_KAFKA_USERNAME`: The username to use when fetching the keytab for kafka itself on 'KERBEROS_API_URL'. Required for [Kerberos Setup with a kerberos API](#kerberos-with).
 
