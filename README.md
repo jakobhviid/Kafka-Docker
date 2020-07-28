@@ -88,7 +88,7 @@ services:
 
 - `KAFKA_RETENTION_HOURS`: Number of hours to keep a log file before deleting it. The higher retention hours the longer data will stay in Kafka. Default is 168 hours (7 days).
 
-- `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP`: A mapping between listener names and security protocols. Required when brokers is set up with SSL. Default is INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_SSL:SSL,EXTERNAL_SSL:SSL,SSL:SSL,PLAINTEXT:PLAINTEXT.
+- `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP`: A mapping between listener names and security protocols. Very rarely is this needed as the default contains most mappings. Default is INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_SSL:SSL,EXTERNAL_SSL:SSL,SSL:SSL,PLAINTEXT:PLAINTEXT,HEALTHCHECK:PLAINTEXT,SASL_SSL:SASL_SSL,INTERNAL_SASL_SSL:SASL_SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,INTERNAL_SASL_PLAINTEXT:SASL_PLAINTEXT.
 
 - `KAFKA_INTER_BROKER_LISTENER_NAME`: The name of the listener used for broker-broker communication. Default is 'INTERNAL'.
 

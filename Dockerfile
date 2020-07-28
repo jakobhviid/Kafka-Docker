@@ -19,7 +19,7 @@ COPY ./kafka_2.12-2.4.0.tgz /opt/
 RUN cd /opt && \
     tar -xzf kafka_2.12-2.4.0.tgz && \
     mv kafka_2.12-2.4.0 ${KAFKA_HOME} && \
-    rm -rf /opt/*.tar
+    rm -rf /opt/*.tgz
 
 # Copy server files
 COPY server_configurations/* ${KAFKA_HOME}/config/
