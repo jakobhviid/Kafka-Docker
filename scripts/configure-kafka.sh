@@ -108,7 +108,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
                 # response will be 'FAIL' if it can't connect or if the url returned an error
                 response=$(curl --fail --connect-timeout 5 --retry 5 --retry-delay 5 --retry-max-time 30 --retry-connrefused --max-time 5 -X POST -H "Content-Type: application/json" -d "{\"username\":\""$KAFKA_KERBEROS_API_KAFKA_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_KAFKA_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$kafka_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_KAFKA_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL")
                 if [ "$response" == "FAIL" ]; then
-                    echo -e "\e[1;31mERROR - Kerberos API did not succeed when fetching kafka keytab. Retrying in 5 seconds \e[0m"
+                    echo -e "\e[1;33mWARNING - Kerberos API did not succeed when fetching kafka keytab. Retrying in 5 seconds \e[0m"
                     sleep 5
 
                     # retrying
@@ -157,7 +157,7 @@ if ! [ -z ${KAFKA_AUTHENTICATION} ]; then
                 # response will be 'FAIL' if it can't connect or if the url returned an error
                 response=$(curl --fail --connect-timeout 5 --retry 5 --retry-delay 5 --retry-max-time 30 --retry-connrefused --max-time 5 -X POST -H "Content-Type: application/json" -d " {\"username\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"\", \"password\":\""$KAFKA_KERBEROS_API_ZOOKEEPER_PASSWORD"\"}" "$KAFKA_KERBEROS_API_URL" -o "$zookeeper_keytab_location" && echo "INFO - Using the keytab from the API and a principal name of '"$KAFKA_KERBEROS_API_ZOOKEEPER_USERNAME"'@'"$KAFKA_KERBEROS_REALM"'" || echo "FAIL")
                 if [ "$response" == "FAIL" ]; then
-                    echo -e "\e[1;31mERROR - Kerberos API did not succeed when fetching zookeeper keytab. Retrying in 5 seconds \e[0m"
+                    echo -e "\e[1;33mWARNING - Kerberos API did not succeed when fetching zookeeper keytab. Retrying in 5 seconds \e[0m"
                     sleep 5
 
                     # retrying
