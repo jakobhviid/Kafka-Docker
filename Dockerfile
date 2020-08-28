@@ -26,9 +26,9 @@ COPY server_configurations/* ${KAFKA_HOME}/config/
 
 RUN mkdir /ssl/ && mkdir /ssl/healthcheck && mkdir /sasl
 
-EXPOSE 9092 9093
+EXPOSE 9091 9092 9093 9094 9095 9096
 
-# HEALTHCHECK --interval=75s --timeout=60s --start-period=25s --retries=2 CMD [ "healthcheck.sh" ]
+HEALTHCHECK --interval=75s --timeout=60s --start-period=25s --retries=2 CMD [ "healthcheck.sh" ]
 
 ENV KAFKA_DATA_HOME=/data/kafka
 ENV KAFKA_SSL_HOME=/ssl

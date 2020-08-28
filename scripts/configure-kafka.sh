@@ -26,20 +26,18 @@ if [ -z "$KAFKA_ADVERTISED_LISTENERS" ]; then
     echo -e "\e[1;31mERROR - Missing 'KAFKA_ADVERTISED_LISTENERS' \e[0m"
     exit 1
 else
-    # adding a healthcheck port (55555)
-    set_property advertised.listeners "$KAFKA_ADVERTISED_LISTENERS",HEALTHCHECK://localhost:55555
+    set_property advertised.listeners "$KAFKA_ADVERTISED_LISTENERS"
 fi
 
 if [ -z "$KAFKA_LISTENERS" ]; then
     echo -e "\e[1;31mERROR - Missing 'KAFKA_LISTENERS' \e[0m"
     exit 1
 else
-    # adding a healthcheck port (55555)
-    set_property listeners "$KAFKA_LISTENERS",HEALTHCHECK://0.0.0.0:55555
+    set_property listeners "$KAFKA_LISTENERS"
 fi
 
 if ! [ -z "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP" ]; then
-    set_property listener.security.protocol.map "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
+    set_property listener.security.protocol.map "$KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",HEALTHCHECK:PLAINTEXT
 fi
 
 if ! [ -z "$KAFKA_RETENTION_HOURS" ]; then

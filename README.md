@@ -76,9 +76,9 @@ services:
 
 - `KAFKA_ZOOKEEPER_CONNECT`: Comma-separated list of Zookeeper URIs' which Kafka will connect to. Kafka will connect to the first available zookeeper. If that goes down it will go to the next and connect to it. Required.
 
-- `KAFKA_ADVERTISED_LISTENERS`: Advertised listeners for clients to use. This value is given to zookeeper so that clients and other Kafka nodes can discover Kafka brokers through Zookeeper. At least two advertised listeners should be configured separated by a comma. In the example given in [How To Use](#how-to-use) two listeners are configured, one listener for broker to broker communication (INTERNAL) and one listener for clients (EXTERNAL). **Note**: Do not configure a listener with port 55555, this is reserved for internal use in the container and do not expose this port to the host network! Required.
+- `KAFKA_ADVERTISED_LISTENERS`: Advertised listeners for clients to use. This value is given to zookeeper so that clients and other Kafka nodes can discover Kafka brokers through Zookeeper. At least two advertised listeners should be configured separated by a comma. In the example given in [How To Use](#how-to-use) two listeners are configured, one listener for broker to broker communication (INTERNAL) and one listener for clients (EXTERNAL).
 
-- `KAFKA_LISTENERS`: Comma-separated list of URIs' on which Kafka will listen. Wildcard IP-address are allowed.  At least two listeners should be configured separated by a comma. In the example given in [How To Use](#how-to-use) two listeners are configured, one listener for broker to broker communication (INTERNAL) and one listener for clients (EXTERNAL). **Note**: Do not configure a listener with port 55555, this is reserved for internal use in the container and do not expose this port to the host network! Required.
+- `KAFKA_LISTENERS`: Comma-separated list of URIs' on which Kafka will listen. Wildcard IP-address are allowed.  At least two listeners should be configured separated by a comma. In the example given in [How To Use](#how-to-use) two listeners are configured, one listener for broker to broker communication (INTERNAL) and one listener for clients (EXTERNAL).
 
 - `KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR`: Replication factor for the essential topic 'consumer_offsets'. Should have a value of at least 2 to ensure availability. Default is 1 and is not ideal.
 
@@ -88,13 +88,15 @@ services:
 
 - `KAFKA_RETENTION_HOURS`: Number of hours to keep a log file before deleting it. The higher retention hours the longer data will stay in Kafka. Default is 168 hours (7 days).
 
-- `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP`: A mapping between listener names and security protocols. Very rarely is this needed as the default contains most mappings. Default is INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_SSL:SSL,EXTERNAL_SSL:SSL,SSL:SSL,PLAINTEXT:PLAINTEXT,HEALTHCHECK:PLAINTEXT,SASL_SSL:SASL_SSL,INTERNAL_SASL_SSL:SASL_SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,INTERNAL_SASL_PLAINTEXT:SASL_PLAINTEXT.
+- `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP`: A mapping between listener names and security protocols. Very rarely is this needed as the default contains most mappings. Default is INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,INTERNAL_SSL:SSL,EXTERNAL_SSL:SSL,SSL:SSL,PLAINTEXT:PLAINTEXT,SASL_SSL:SASL_SSL,INTERNAL_SASL_SSL:SASL_SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,INTERNAL_SASL_PLAINTEXT:SASL_PLAINTEXT.
 
 - `KAFKA_INTER_BROKER_LISTENER_NAME`: The name of the listener used for broker-broker communication. Default is 'INTERNAL'.
 
 - `KAFKA_DEFAULT_REPLICATION_FACTOR`: If a topic isn't created explicitly and therefore created automatically, the default replication factor will be used. Default is 1.
 
 - `KAFKA_HEAP_OPTS`: Configuring Heap size for Kafka, Xmx = max heap size and Xms = initial heap size. Default is "-Xmx256M". 
+
+- `KAFKA_HEALTHCHECK_PORT`: The port to use for healthcheck. This should be a different port than the one clients use. Default is port 9092.
 
 - `KAFKA_JVM_PERFORMANCE_OPTS`: Configuring JVM options for Kafka. Default is ""-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true""
 
@@ -298,3 +300,6 @@ services:
       KAFKA_ACL_SUPER_USERS: User:kafka
       KAFKA_ZOOKEEPER_SET_ACL: "true"
 ```
+
+# Known Bugs
+When Kerberos and/or SSL is activated the containers healthcheck will not succeed and docker will interpret it as being unhealthy.

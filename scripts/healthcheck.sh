@@ -7,10 +7,12 @@ kafkaProcess=$(ps -x | grep java | grep kafka)
 if ! [[ -z "$kafkaProcess" ]]; then
     # Check logic. Healthcheck will time out if server is not available.
     topicName="TEST-HEALTHCHECK-BROKER-$KAFKA_BROKER_ID"
-    /opt/kafka/bin/kafka-topics.sh --create --topic $topicName --bootstrap-server localhost:55555 --partitions 1 --replication-factor 1
+    KAFKA_HEALTHCHECK_PORT=${KAFKA_HEALTHCHECK_PORT:-9092}
+    
+    /opt/kafka/bin/kafka-topics.sh --create --topic $topicName --bootstrap-server localhost:$KAFKA_HEALTHCHECK_PORT --partitions 1 --replication-factor 1
 
     # If somehow the topic already exists it will throw an error when creating, but if this checks goes through that means the server is still operating fine and will therefore not be considered unhealthy
-    topic=$(/opt/kafka/bin/kafka-topics.sh --list --topic $topicName --bootstrap-server localhost:55555 | grep "$topicName")
+    topic=$(/opt/kafka/bin/kafka-topics.sh --list --topic $topicName --bootstrap-server localhost:$KAFKA_HEALTHCHECK_PORT | grep "$topicName")
 
     # If topic is empty
     if [[ -z "$topic" ]]; then
@@ -19,7 +21,7 @@ if ! [[ -z "$kafkaProcess" ]]; then
     fi
 
     # Delete topic
-    /opt/kafka/bin/kafka-topics.sh --delete --topic $topicName --bootstrap-server localhost:55555
+    /opt/kafka/bin/kafka-topics.sh --delete --topic $topicName --bootstrap-server localhost:$KAFKA_HEALTHCHECK_PORT
 
     echo " OK "
     exit 0
