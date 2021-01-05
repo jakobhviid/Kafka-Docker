@@ -2,12 +2,27 @@ name: ci
 
 on:
   push:
-    branches: master
+    tags: 'releases/*'
 
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
+      -
+         name: Set up variables
+         id: vars
+         env:
+           DOCKER_REPO: cfei/kafka
+         shell: bash
+         # ${GITHUB_REF:19} returns a substring from position 19, which "cuts" away "refs/tags/releases/" from the tag-name
+         # ${GITHUB_REF: -4} returns a substring consisting of the last 4 characters of the string (the extra " " is necessary)
+         run: |
+           if [ ${GITHUB_REF: -4} == 'beta' ] 
+           then
+             echo ::set-output name=DOCKER_TAG::${DOCKER_REPO}:${GITHUB_REF:19}
+           else
+             echo ::set-output name=DOCKER_TAG::${DOCKER_REPO}:${GITHUB_REF:19},${DOCKER_REPO}:latest
+           fi
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -26,8 +41,8 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: cfei/kafka:latest-multiarch
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          tags: ${{ steps.vars.outputs.DOCKER_TAG }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
       -
         name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
